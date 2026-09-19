@@ -25,6 +25,7 @@ export function SkinProfileProvider({ children }: SkinProfileProviderProps) {
   const [profile, setProfile] = useState<SkinProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadedUserId, setLoadedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -35,8 +36,11 @@ export function SkinProfileProvider({ children }: SkinProfileProviderProps) {
       setProfile(null);
       setLoading(false);
       setError(null);
+      setLoadedUserId(null);
       return;
     }
+
+    if (loadedUserId === user.id) return;
 
     let cancelled = false;
 
@@ -60,6 +64,7 @@ export function SkinProfileProvider({ children }: SkinProfileProviderProps) {
       }
 
       setLoading(false);
+      setLoadedUserId(user!.id);
     }
 
     fetch();
@@ -67,7 +72,7 @@ export function SkinProfileProvider({ children }: SkinProfileProviderProps) {
     return () => {
       cancelled = true;
     };
-  }, [user, authLoading]);
+  }, [user, authLoading, loadedUserId]);
 
   const saveProfile = useCallback(
     async (

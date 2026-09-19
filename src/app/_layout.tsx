@@ -44,8 +44,6 @@ function ProfileGate() {
 
     if (!profile && !inProfileSetup) {
       router.replace("/(authenticated)/profile-setup" as Href);
-    } else if (profile && inProfileSetup) {
-      router.replace("/(authenticated)" as Href);
     }
   }, [session, authLoading, profileLoading, profile, pathname, router]);
 
