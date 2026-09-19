@@ -1,9 +1,11 @@
 import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, useColorScheme, View } from "react-native";
-import { DarkTheme, DefaultTheme, ThemeProvider, Slot, useRouter, useSegments } from "expo-router";
+import type { Href } from "expo-router";
+import { DarkTheme, DefaultTheme, ThemeProvider, Slot, useRouter, useSegments, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
+import { useSkinProfile } from "@/hooks/use-skin-profile";
 import { colors } from "@/theme/colors";
 
 SplashScreen.preventAutoHideAsync();
@@ -22,6 +24,30 @@ function AuthGate() {
       router.replace("/");
     }
   }, [session, loading, segments, router]);
+
+  return null;
+}
+
+function ProfileGate() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { session, loading: authLoading } = useAuth();
+  const { profile, loading: profileLoading } = useSkinProfile();
+
+  useEffect(() => {
+    if (authLoading || profileLoading) return;
+    if (!session) return;
+
+    const inProfileSetup =
+      pathname === "/profile-setup" ||
+      pathname === "/(authenticated)/profile-setup";
+
+    if (!profile && !inProfileSetup) {
+      router.replace("/(authenticated)/profile-setup" as Href);
+    } else if (profile && inProfileSetup) {
+      router.replace("/(authenticated)" as Href);
+    }
+  }, [session, authLoading, profileLoading, profile, pathname, router]);
 
   return null;
 }
@@ -47,6 +73,7 @@ function RootLayoutInner() {
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <AuthGate />
+      <ProfileGate />
       <Slot />
     </ThemeProvider>
   );
