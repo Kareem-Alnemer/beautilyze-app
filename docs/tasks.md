@@ -87,6 +87,41 @@
 **Goal:** User can complete a skin profile (type, concerns, allergies, age group).
 **Acceptance:** Profile saves to Supabase, reloads correctly on next login.
 
+### M2 — Skin Profile ⬜
+
+**Goal:** User completes a mandatory skin profile before accessing the app.
+**Acceptance:** After sign-up, user is redirected to the questionnaire. Cannot proceed until all 5 fields are filled. Profile saves to Supabase. Reloads correctly on next login.
+
+#### M2.1 — Create `useSkinProfile` hook
+- File: `src/hooks/use-skin-profile.ts`
+- Skill: none
+- Acceptance: Exports `useSkinProfile()` returning `{ profile, loading, error, saveProfile, refreshProfile }`. Reads from `skin_profiles` table filtered by `auth.uid()`. Writes via upsert. Handles missing-row case (returns `null` for profile). `tsc --noEmit` passes.
+- Depends on: M1 complete
+
+#### M2.2 — Create Skin Profile questionnaire screen
+- File: `src/app/(authenticated)/profile-setup.tsx`
+- Skill: `expo-ui`
+- Acceptance: Renders 5 fields: skin_type (single-select), concerns (multi-select chips), allergies (free text + chips), age_group (single-select), sensitivity_level (single-select). Submit button calls `saveProfile()`. On success navigates to home. Uses `StyleSheet.create()` and theme tokens only. All inputs have `accessibilityLabel`. `tsc --noEmit` passes.
+- Depends on: M2.1
+
+#### M2.3 — Add profile-completion gate to root layout
+- File: `src/app/_layout.tsx`
+- Skill: none
+- Acceptance: After auth resolves, checks if user has a skin profile. If authenticated AND no profile AND not already on `profile-setup`, redirect to `profile-setup`. If authenticated AND has profile AND on `profile-setup`, redirect to home. No redirect loops. `tsc --noEmit` passes.
+- Depends on: M2.1, M2.2
+
+#### M2.4 — Update Profile screen to show real profile data
+- File: `src/app/(authenticated)/profile.tsx`
+- Skill: `expo-ui`
+- Acceptance: Shows user email, skin type, concerns, allergies, age group, sensitivity level. "Edit Profile" button navigates to `profile-setup`. Sign Out button unchanged. Uses `StyleSheet.create()` and theme tokens only. `tsc --noEmit` passes.
+- Depends on: M2.1
+
+#### M2.5 — Final validation
+- File: none (verification step)
+- Skill: none
+- Acceptance: `npx tsc --noEmit` returns zero errors. `npm run lint` returns zero errors. Manual test: new user signs up → redirected to profile-setup → fills form → redirected to home → profile tab shows saved data. If any check fails, report error and stop — do not attempt fixes, do not mark complete.
+- Depends on: M2.1–M2.4
+
 ### M3 — Ingredient Scanning ⬜
 **Goal:** User can scan a product label and see parsed ingredients.
 **Acceptance:** OCR extracts text, pg_trgm matches ingredients, unmatched are flagged.
