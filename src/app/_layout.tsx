@@ -1,7 +1,6 @@
 import { useEffect } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { ActivityIndicator, StyleSheet, useColorScheme, View } from "react-native";
 import { DarkTheme, DefaultTheme, ThemeProvider, useRouter, useSegments } from "expo-router";
-import { useColorScheme } from "react-native";
 import * as SplashScreen from "expo-splash-screen";
 
 import { AuthProvider, useAuth } from "@/contexts/auth-context";

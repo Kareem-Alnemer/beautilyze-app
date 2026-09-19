@@ -108,7 +108,7 @@ export default function LoginScreen() {
             accessibilityLabel="Go to sign up"
           >
             <Text style={styles.linkText}>
-              Don't have an account? Sign up
+              Don&apos;t have an account? Sign up
             </Text>
           </Pressable>
         </View>
