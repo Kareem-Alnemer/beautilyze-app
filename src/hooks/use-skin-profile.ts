@@ -19,35 +19,39 @@ export function useSkinProfile(): UseSkinProfileReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProfile = useCallback(async () => {
-    if (!user) {
-      setProfile(null);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    const { data, error: fetchError } = await supabase
-      .from("skin_profiles")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (fetchError) {
-      setError(fetchError.message);
-      setProfile(null);
-    } else {
-      setProfile(data);
-    }
-
-    setLoading(false);
-  }, [user]);
-
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if (!user) return;
+
+    let cancelled = false;
+
+    async function fetch() {
+      setLoading(true);
+      setError(null);
+
+      const { data, error: fetchError } = await supabase
+        .from("skin_profiles")
+        .select("*")
+        .eq("user_id", user!.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (fetchError) {
+        setError(fetchError.message);
+        setProfile(null);
+      } else {
+        setProfile(data);
+      }
+
+      setLoading(false);
+    }
+
+    fetch();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const saveProfile = useCallback(
     async (
@@ -68,15 +72,36 @@ export function useSkinProfile(): UseSkinProfileReturn {
         return { error: upsertError.message };
       }
 
-      await fetchProfile();
+      const { data: refreshed } = await supabase
+        .from("skin_profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      setProfile(refreshed);
       return { error: null };
     },
-    [user, fetchProfile],
+    [user],
   );
 
   const refreshProfile = useCallback(async () => {
-    await fetchProfile();
-  }, [fetchProfile]);
+    if (!user) return;
+
+    setLoading(true);
+    const { data, error: fetchError } = await supabase
+      .from("skin_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (fetchError) {
+      setError(fetchError.message);
+      setProfile(null);
+    } else {
+      setProfile(data);
+    }
+    setLoading(false);
+  }, [user]);
 
   return { profile, loading, error, saveProfile, refreshProfile };
 }
