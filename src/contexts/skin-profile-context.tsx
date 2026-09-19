@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/auth-context";
 import type { SkinProfile } from "@/types/supabase";
 
-interface UseSkinProfileReturn {
+interface SkinProfileContextValue {
   profile: SkinProfile | null;
   loading: boolean;
   error: string | null;
@@ -13,14 +14,29 @@ interface UseSkinProfileReturn {
   refreshProfile: () => Promise<void>;
 }
 
-export function useSkinProfile(): UseSkinProfileReturn {
-  const { user } = useAuth();
+const SkinProfileContext = createContext<SkinProfileContextValue | null>(null);
+
+interface SkinProfileProviderProps {
+  children: ReactNode;
+}
+
+export function SkinProfileProvider({ children }: SkinProfileProviderProps) {
+  const { user, loading: authLoading } = useAuth();
   const [profile, setProfile] = useState<SkinProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (authLoading) return;
+
+    if (!user) {
+      // Intentional state reset on external auth change.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setProfile(null);
+      setLoading(false);
+      setError(null);
+      return;
+    }
 
     let cancelled = false;
 
@@ -51,7 +67,7 @@ export function useSkinProfile(): UseSkinProfileReturn {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, authLoading]);
 
   const saveProfile = useCallback(
     async (
@@ -103,5 +119,19 @@ export function useSkinProfile(): UseSkinProfileReturn {
     setLoading(false);
   }, [user]);
 
-  return { profile, loading, error, saveProfile, refreshProfile };
+  return (
+    <SkinProfileContext.Provider
+      value={{ profile, loading, error, saveProfile, refreshProfile }}
+    >
+      {children}
+    </SkinProfileContext.Provider>
+  );
+}
+
+export function useSkinProfile(): SkinProfileContextValue {
+  const ctx = useContext(SkinProfileContext);
+  if (!ctx) {
+    throw new Error("useSkinProfile must be used within a SkinProfileProvider");
+  }
+  return ctx;
 }

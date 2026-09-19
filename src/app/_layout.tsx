@@ -5,7 +5,7 @@ import { DarkTheme, DefaultTheme, ThemeProvider, Slot, useRouter, useSegments, u
 import * as SplashScreen from "expo-splash-screen";
 
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
-import { useSkinProfile } from "@/hooks/use-skin-profile";
+import { SkinProfileProvider, useSkinProfile } from "@/contexts/skin-profile-context";
 import { colors } from "@/theme/colors";
 
 SplashScreen.preventAutoHideAsync();
@@ -82,7 +82,9 @@ function RootLayoutInner() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <RootLayoutInner />
+      <SkinProfileProvider>
+        <RootLayoutInner />
+      </SkinProfileProvider>
     </AuthProvider>
   );
 }
