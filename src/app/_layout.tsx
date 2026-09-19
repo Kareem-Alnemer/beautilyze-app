@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, useColorScheme, View } from "react-native";
-import { DarkTheme, DefaultTheme, ThemeProvider, useRouter, useSegments } from "expo-router";
+import { DarkTheme, DefaultTheme, ThemeProvider, Slot, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
@@ -15,15 +15,26 @@ function AuthGate() {
 
   useEffect(() => {
     if (loading) return;
-
     const inAuthGroup = segments[0] === "(auth)";
-
     if (!session && !inAuthGroup) {
       router.replace("/(auth)/login");
     } else if (session && inAuthGroup) {
       router.replace("/");
     }
   }, [session, loading, segments, router]);
+
+  return null;
+}
+
+function RootLayoutInner() {
+  const { loading } = useAuth();
+  const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    if (!loading) {
+      SplashScreen.hideAsync();
+    }
+  }, [loading]);
 
   if (loading) {
     return (
@@ -33,18 +44,19 @@ function AuthGate() {
     );
   }
 
-  return null;
+  return (
+    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+      <AuthGate />
+      <Slot />
+    </ThemeProvider>
+  );
 }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <AuthProvider>
-        <AuthGate />
-      </AuthProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <RootLayoutInner />
+    </AuthProvider>
   );
 }
 
